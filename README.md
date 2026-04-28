@@ -1,3 +1,7 @@
+<p align="center">
+  <img src="build/icons/app.png" alt="鱼老师文件恢复助手 logo" width="140" />
+</p>
+
 # 鱼老师文件恢复助手
 
 一个面向 Windows 的文件恢复工具原型，当前包含：
