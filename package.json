@@ -1,0 +1,58 @@
+{
+  "name": "winrecovery-desktop",
+  "productName": "鱼老师文件恢复助手",
+  "version": "0.1.0",
+  "author": "于大治 <36034729@qq.com>",
+  "license": "GPL-2.0-or-later",
+  "description": "鱼老师文件恢复助手 desktop setup for Windows file recovery testing.",
+  "main": "desktop/main.js",
+  "scripts": {
+    "start:desktop": "electron .",
+    "pack:win": "electron-builder --dir",
+    "dist:win": "electron-builder --win nsis"
+  },
+  "build": {
+    "appId": "com.winrecovery.desktop",
+    "productName": "WinRecovery",
+    "copyright": "Copyright (c) 2026 于大治 <36034729@qq.com>",
+    "asar": false,
+    "files": [
+      "build/icons/**/*",
+      "desktop/**/*",
+      "runtime/minimal-web/**/*",
+      "tools/**/*",
+      "README.md"
+    ],
+    "directories": {
+      "output": "dist",
+      "buildResources": "build"
+    },
+    "win": {
+      "signAndEditExecutable": true,
+      "icon": "build/icons/app.ico",
+      "target": [
+        {
+          "target": "nsis",
+          "arch": [
+            "x64"
+          ]
+        }
+      ]
+    },
+    "nsis": {
+      "oneClick": false,
+      "allowToChangeInstallationDirectory": true,
+      "allowElevation": true,
+      "createDesktopShortcut": true,
+      "createStartMenuShortcut": true,
+      "shortcutName": "WinRecovery",
+      "installerIcon": "build/icons/app.ico",
+      "uninstallerIcon": "build/icons/app.ico",
+      "installerHeaderIcon": "build/icons/app.ico"
+    }
+  },
+  "devDependencies": {
+    "electron": "^41.3.0",
+    "electron-builder": "^26.8.1"
+  }
+}

@@ -1,0 +1,279 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>鱼老师文件恢复助手</title>
+  <link rel="stylesheet" href="./styles.css">
+</head>
+<body>
+  <div class="page-shell">
+    <div class="title-strip">
+      <div class="title-strip__left">
+        <span class="title-strip__dot"></span>
+        <span>WinRecovery 最小实现</span>
+      </div>
+      <div class="title-strip__right">
+        <span id="title-drive">当前源盘：G:</span>
+        <span id="title-mode">扫描模式：快速扫描</span>
+        <span id="title-engines">引擎：快速 - / 深度 -</span>
+        <span id="title-status">状态：就绪</span>
+      </div>
+    </div>
+
+    <header class="top-card">
+      <div class="brand-block">
+        <div class="brand-head">
+          <img class="brand-logo" src="./assets/fish-logo.png" alt="鱼老师 logo">
+          <div>
+            <div class="eyebrow">WINRECOVERY</div>
+            <h1>鱼老师文件恢复助手</h1>
+          </div>
+        </div>
+        <p>当前最小实现已经开始回归双引擎方案：快速扫描目标是 TSK，深度扫描目标是 PhotoRec，WinFR 保留为可选后备。测试边界固定为 G: 作为源盘，F: 作为恢复输出盘。</p>
+        <div class="brand-actions">
+          <button id="about-button" type="button" class="button-secondary">关于 / 版权声明</button>
+        </div>
+      </div>
+
+      <div class="toolbar">
+        <div class="toolbar-field">
+          <label for="drive-select">源盘</label>
+          <select id="drive-select" aria-label="选择源盘"></select>
+        </div>
+        <div class="toolbar-field">
+          <label for="deep-target-drive">恢复目标盘</label>
+          <select id="deep-target-drive" aria-label="选择恢复目标盘"></select>
+        </div>
+        <div class="toolbar-field toolbar-field--path">
+          <label for="restore-root-input">恢复文件夹</label>
+          <div class="toolbar-path-picker">
+            <input id="restore-root-input" type="text" placeholder="请选择恢复文件夹" aria-label="恢复文件夹路径" readonly>
+            <button id="restore-top-button" type="button">选择</button>
+            <button id="open-restore-root-button" type="button">打开</button>
+          </div>
+        </div>
+        <div class="toolbar-field">
+          <label for="quick-engine-select">快速扫描引擎</label>
+          <select id="quick-engine-select" aria-label="选择快速扫描引擎"></select>
+        </div>
+        <div class="toolbar-field">
+          <label for="deep-engine-select">深度扫描引擎</label>
+          <select id="deep-engine-select" aria-label="选择深度扫描引擎"></select>
+        </div>
+        <div class="toolbar-field">
+          <label for="deep-max-output-select">深扫写入上限</label>
+          <select id="deep-max-output-select" aria-label="选择深扫最大写入上限">
+            <option value="536870912">512 MB</option>
+            <option value="1073741824" selected>1 GB</option>
+            <option value="2147483648">2 GB</option>
+            <option value="5368709120">5 GB</option>
+            <option value="10737418240">10 GB</option>
+          </select>
+        </div>
+        <button id="quick-scan-button" class="button-primary">快速扫描</button>
+        <button id="deep-scan-button">深度扫描</button>
+        <button id="stop-button">停止</button>
+        <input id="search-input" type="text" placeholder="搜索文件名、路径或来源" aria-label="搜索">
+        <div id="deep-output-root" class="toolbar-note">恢复与深扫根目录：F:\WinRecovery-Restore</div>
+        <div id="engine-note" class="toolbar-note">引擎状态：正在读取当前可用引擎。</div>
+      </div>
+    </header>
+
+    <section class="summary-row">
+      <article class="summary-card">
+        <div class="summary-card__label">高置信度</div>
+        <div id="summary-high" class="summary-card__value">0</div>
+        <div class="summary-card__note">保留原路径和文件名，建议优先恢复</div>
+      </article>
+      <article class="summary-card">
+        <div class="summary-card__label">深度扫描结果</div>
+        <div id="summary-deep" class="summary-card__value">0</div>
+        <div class="summary-card__note">来自 PhotoRec、WinFR 或后续深度结果导入</div>
+      </article>
+      <article class="summary-card">
+        <div class="summary-card__label">建议先恢复</div>
+        <div id="summary-recommended" class="summary-card__value">0</div>
+        <div class="summary-card__note">内容完整且预览通过，适合直接恢复</div>
+      </article>
+    </section>
+
+    <main class="content-grid">
+      <section class="panel">
+        <div class="panel-head">
+          <div>
+            <h2 id="results-title">恢复候选项 0 项</h2>
+            <p>默认按恢复概率排序，尽量把最值得看的结果排在前面。</p>
+          </div>
+          <div class="panel-tools">
+            <button id="filter-all" class="chip chip-active">全部结果</button>
+            <button id="filter-quick" class="chip">快速扫描</button>
+            <button id="filter-deep" class="chip">深度扫描</button>
+          </div>
+        </div>
+
+        <div class="table-shell">
+          <table>
+            <colgroup>
+              <col style="width: 18%">
+              <col style="width: 34%">
+              <col style="width: 9%">
+              <col style="width: 14%">
+              <col style="width: 9%">
+              <col style="width: 8%">
+              <col style="width: 8%">
+            </colgroup>
+            <thead>
+              <tr>
+                <th>文件名</th>
+                <th>原路径</th>
+                <th>大小</th>
+                <th>删除时间</th>
+                <th>来源</th>
+                <th>状态</th>
+                <th>恢复概率</th>
+              </tr>
+            </thead>
+            <tbody id="result-body"></tbody>
+          </table>
+        </div>
+
+        <div class="status-bar">
+          <span id="status-left">扫描状态：就绪</span>
+          <span id="status-right">建议：先执行快速扫描，再决定是否进入深度扫描。</span>
+        </div>
+      </section>
+
+      <aside class="side-panel">
+        <section class="detail-card">
+          <h2>文件详情</h2>
+          <p>当前选中项的恢复信息与建议动作。</p>
+
+          <div class="quick-metrics">
+            <div class="quick-metric">
+              <span class="quick-metric__label">来源</span>
+              <strong id="metric-source">-</strong>
+            </div>
+            <div class="quick-metric">
+              <span class="quick-metric__label">状态</span>
+              <strong id="metric-status">-</strong>
+            </div>
+            <div class="quick-metric">
+              <span class="quick-metric__label">恢复概率</span>
+              <strong id="metric-confidence">-</strong>
+            </div>
+          </div>
+
+          <div class="inner-card">
+            <div class="card-row">
+              <h3 id="detail-name">请选择恢复候选项</h3>
+              <span id="detail-pill" class="mini-pill">等待选择</span>
+            </div>
+            <p id="detail-path" class="path">选中表格中的一项后，这里会显示原始路径。</p>
+            <p id="detail-notes">这里会显示恢复来源、完整性和恢复建议。</p>
+          </div>
+
+          <div class="inner-card">
+            <h3>建议动作</h3>
+            <ul id="action-list" class="action-list">
+              <li>先执行快速扫描。</li>
+              <li>选择一个高置信度文件查看详情。</li>
+              <li>确认后再导出报告或创建恢复任务。</li>
+            </ul>
+            <div class="action-buttons">
+              <button id="restore-button" class="button-primary button-fill">恢复选中文件</button>
+              <button id="export-button" class="button-secondary button-fill">导出扫描报告</button>
+            </div>
+          </div>
+
+          <div class="inner-card">
+            <h3>深度扫描</h3>
+            <p id="deep-context-text">深度扫描会把恢复结果批量写入你选择的恢复目录。当前主深度引擎是 PhotoRec，WinFR 仍可作为后备。</p>
+            <div id="deep-job-metrics" class="deep-job-metrics">
+              <div class="quick-metric">
+                <span class="quick-metric__label">当前阶段</span>
+                <strong id="deep-phase-value">等待作业</strong>
+              </div>
+              <div class="quick-metric">
+                <span class="quick-metric__label">输出文件</span>
+                <strong id="deep-count-value">0</strong>
+              </div>
+              <div class="quick-metric">
+                <span class="quick-metric__label">输出体积</span>
+                <strong id="deep-size-value">-</strong>
+              </div>
+            </div>
+            <div class="inner-card inner-card--subsection">
+              <h3>实际输出目录</h3>
+              <ul id="deep-output-list" class="action-list compact-list">
+                <li>执行一次深度扫描后，这里会列出 output.1、output.2 这类真实结果目录。</li>
+              </ul>
+            </div>
+            <div class="action-buttons">
+              <button id="request-admin-button" class="button-primary button-fill">重新申请管理员运行</button>
+              <button id="open-deep-job-button" class="button-secondary button-fill">打开作业目录</button>
+            </div>
+            <div class="action-buttons">
+              <button id="open-deep-result-button" class="button-secondary button-fill">打开结果目录</button>
+              <button id="import-deep-results-button" class="button-secondary button-fill">导入当前结果</button>
+            </div>
+          </div>
+
+          <div class="inner-card">
+            <h3>最近活动</h3>
+            <ul id="activity-list" class="action-list">
+              <li>当前还没有导出报告、恢复任务或结果导入记录。</li>
+            </ul>
+          </div>
+
+          <div class="inner-card">
+            <h3>预览区</h3>
+            <div id="preview-box" class="preview-box">图片、文本和文档预览会在这里展示。</div>
+          </div>
+
+          <div class="warn-card">
+            <h3>恢复提醒</h3>
+            <p>当前测试边界是 G: 源盘和 F:\WinRecovery-Restore 输出目录。不要把恢复结果写回源盘，也不要在恢复测试中删除其它盘的文件。</p>
+          </div>
+        </section>
+      </aside>
+    </main>
+  </div>
+
+  <div id="about-modal" class="modal-shell" hidden>
+    <div id="about-backdrop" class="modal-backdrop"></div>
+    <section class="modal-card" role="dialog" aria-modal="true" aria-labelledby="about-title">
+      <div class="modal-head">
+        <div>
+          <div class="eyebrow">ABOUT</div>
+          <h2 id="about-title">鱼老师文件恢复助手</h2>
+        </div>
+        <button id="about-close-button" type="button" class="modal-close" aria-label="关闭">×</button>
+      </div>
+      <div class="modal-body">
+        <div class="about-grid">
+          <div class="about-item">
+            <span class="about-item__label">版权</span>
+            <strong>Copyright (c) 2026 于大治</strong>
+          </div>
+          <div class="about-item">
+            <span class="about-item__label">开发者</span>
+            <strong>于大治</strong>
+          </div>
+          <div class="about-item">
+            <span class="about-item__label">联系方式</span>
+            <strong>36034729@qq.com</strong>
+          </div>
+          <div class="about-item">
+            <span class="about-item__label">开源计划</span>
+            <strong>计划采用 GPL 开源协议发布</strong>
+          </div>
+        </div>
+        <p class="about-note">本工具用于 Windows 文件恢复测试与公开发布准备。第三方恢复引擎、商标和相关许可仍归各自作者或权利人所有。</p>
+      </div>
+    </section>
+  </div>
+
+  <script src="./app.js"></script>
+</body>
+</html>

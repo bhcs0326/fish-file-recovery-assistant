@@ -1,0 +1,12 @@
+node_modules/
+dist/
+artifacts/
+*.log
+*.tmp
+.vs/
+bin/
+obj/
+*.user
+*.suo
+Thumbs.db
+Desktop.ini
